@@ -28,7 +28,8 @@ def byteWriter(bitStr, outputFile):
     while len(bitStream) > 8:
         byteStr = bitStream[:8]
         bitStream = bitStream[8:]
-        outputFile.write(chr(int(byteStr, 2)))
+        chr_int_bytestr = chr(int(byteStr, 2))
+        outputFile.write(bytes(chr_int_bytestr, 'utf-8'))
 
 def bitReader(n):
     global byteArr
@@ -44,8 +45,8 @@ def bitReader(n):
     return bitStr
 
 if len(sys.argv) != 4:
+    sys.argv = ['.\\fibonacci.py', 'd', '.\\output.txt', 'output2.txt']
     print('Usage: Fibonacci.py [e|d] [path]InputFileName [path]OutputFileName')
-    sys.exit()
 mode = sys.argv[1]
 inputFile = sys.argv[2]
 outputFile = sys.argv[3]
@@ -75,9 +76,11 @@ if mode == 'e':
 
     bitStream = ''
     fo = open(outputFile, 'wb')
-    fo.write(bytearray(chr(len(tupleList) - 1)))
+    chr_len_tuple = chr(len(tupleList) - 1)
+    fo.write(bytes(chr_len_tuple, 'utf-8'))
     for (freq, byteValue, encodingBitStr) in tupleList:
-        fo.write(chr(byteValue))
+      chr_byte_value = chr(byteValue)
+      fo.write(bytes(chr_byte_value, 'utf-8'))
 
     bitStr = bin(fileSize - 1)
     bitStr = bitStr[2:]
@@ -101,6 +104,7 @@ elif mode == 'd':
         encodingBitStr = encode_fib(i + 1)
         dic[encodingBitStr] = byteValue
 
+    # Doesn't work from here downwards. Maybe long() should be changed to int()
     numBytes = long(bitReader(32), 2) + 1
     print('Number of bytes to decode:', numBytes)
 
@@ -111,6 +115,7 @@ elif mode == 'd':
             encodingBitStr += bitReader(1)
             if encodingBitStr.endswith('11'):
                 byteValue = dic[encodingBitStr]
-                fo.write(chr(byteValue))
+                chr_bytevalue = chr(byteValue)
+                fo.write(bytes(chr_bytevalue, 'utf-8'))
                 break
     fo.close()
