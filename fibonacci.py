@@ -104,16 +104,23 @@ elif mode == 'd':
         encodingBitStr = encode_fib(i + 1)
         dic[encodingBitStr] = byteValue
 
-    # Doesn't work from here downwards. Maybe long() should be changed to int()
-    numBytes = long(bitReader(32), 2) + 1
+    numBytes = int(bitReader(32), 2) + 1
     print('Number of bytes to decode:', numBytes)
 
     fo = open(outputFile, 'wb')
+
+    print("dic: ")
+    print(dic)
+
     for b in range(numBytes):
         encodingBitStr = ''
         while True:
             encodingBitStr += bitReader(1)
-            if encodingBitStr.endswith('11'):
+            if(len(encodingBitStr) > 10):
+                break
+            if encodingBitStr.endswith('11') and encodingBitStr in dic:
+                print("encoding bit str:")
+                print(encodingBitStr)
                 byteValue = dic[encodingBitStr]
                 chr_bytevalue = chr(byteValue)
                 fo.write(bytes(chr_bytevalue, 'utf-8'))
