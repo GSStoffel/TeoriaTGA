@@ -1,7 +1,7 @@
 import os
 import sys
 
-def leitor(numero):
+def leitor(numero): # Lê do arquivo de entrada
     global array_de_bytes
     global posicao_bit
     str_bit = ''
@@ -16,7 +16,7 @@ def leitor(numero):
 
     return str_bit
 
-def escrita(str_bit, nome_arquivo_saida):
+def escrita(str_bit, nome_arquivo_saida): # Escreve no arquivo de saída
     global bit_stream
     bit_stream += str_bit
 
@@ -28,15 +28,15 @@ def escrita(str_bit, nome_arquivo_saida):
 
 def fibonacci_encode(numero):
     saida = ""
-    if numero >= 1:
+    if numero >= 1: # Início da sequência fibonacci
         pri_aux = 1
         seg_aux = 1
-        prox_num = pri_aux + seg_aux
-        lista_numeros = [seg_aux]
+        prox_num = pri_aux + seg_aux # Pega o próximo número da sequência
+        lista_numeros = [seg_aux] # Cria a lista
         saida = "1"
 
-        while numero >= prox_num:
-            lista_numeros.append(prox_num)
+        while numero >= prox_num: # Realiza a sequência
+            lista_numeros.append(prox_num) # Adiciona o próximo número da sequência
             pri_aux = seg_aux
             seg_aux = prox_num
             prox_num = pri_aux + seg_aux
@@ -64,47 +64,47 @@ array_de_bytes = bytearray(arquivo_input.read(tamanho_arquivo))
 arquivo_input.close()
 tamanho_arquivo = len(array_de_bytes)
 
-if entrada == 'encode':
+if entrada == 'encode': # Se for escolhido o encode no pipeline
     lista_frequencia = [0] * 256
-
-    for b in array_de_bytes:
-        lista_frequencia[b] += 1
+    for i_byte in array_de_bytes: # Calcula a frequência de cada byte no arquivo
+        lista_frequencia[i_byte] += 1
 
     lista = []
+    for i_byte in range(256): # Cria uma tupla contendo os valores de frequencia, valor do byte e a string do bit codificada
+        if lista_frequencia[i_byte] > 0:
+            lista.append((lista_frequencia[i_byte], i_byte, ''))
 
-    for b in range(256):
-        if lista_frequencia[b] > 0:
-            lista.append((lista_frequencia[b], b, ''))
+    lista = sorted(lista, key=lambda tupla: tupla[0], reverse = True) # Ordena pela frequência, em ordem descendente
 
-    lista = sorted(lista, key=lambda tupla: tupla[0], reverse = True)
-
-    for b in range(len(lista)):
+    for b in range(len(lista)): # Bit codificado recebe valor do byte
         lista[b] = (lista[b][0], lista[b][1], fibonacci_encode(b + 1))
 
     bit_stream = ''
     chr_len_tuple = chr(len(lista) - 1)
 
     arquivo_output = open(nome_arquivo_saida, 'wb')
-    arquivo_output.write(bytes(chr_len_tuple))
+    arquivo_output.write(bytes(chr_len_tuple)) # Escreve a quantidade de bytes
 
     for (freq, valor_do_byte, bit_str_encoding) in lista:
       chr_valor_byte = chr(valor_do_byte)
-      arquivo_output.write(bytes(chr_valor_byte))
+      arquivo_output.write(bytes(chr_valor_byte)) # Escreve o valor do byte no arquivo
 
-    str_bit = bin(tamanho_arquivo - 1)
-    str_bit = str_bit[2:]
+    str_bit = bin(tamanho_arquivo - 1) # Retorna o tamanho do arquivo em binário
+    str_bit = str_bit[2:] # Remove o início do arquivo, pois não é necessário
     str_bit = '0' * (32 - len(str_bit)) + str_bit
     escrita(str_bit, arquivo_output)
 
+    # Dicionário que contém o valor do byte e a string do bit codificada
     dic = dict([(tupla[1], tupla[2]) for tupla in lista])
 
+    # Escreve os dados codificados
     for b in array_de_bytes:
         escrita(dic[b], arquivo_output)
 
     escrita('0' * 8, arquivo_output)
     arquivo_output.close()
 
-elif entrada == 'decode':
+elif entrada == 'decode': # Se for escolhido o decode no pipeline
     posicao_bit = 0
     n = int(leitor(8), 2) + 1
     dic = dict()
@@ -116,14 +116,12 @@ elif entrada == 'decode':
 
     bytes_num = long(leitor(32), 2) + 1
 
-    arquivo_output = open(nome_arquivo_saida, 'wb')
+    arquivo_output = open(nome_arquivo_saida, 'wb') # Abre o arquivo de saída para escrita
 
-    for b in range(bytes_num):
+    for b in range(bytes_num): # Vai lendo de bit em bit até que ache um padrão para decodificar
         bit_str_encoding = ''
-
         while True:
             bit_str_encoding += leitor(1)
-
             if bit_str_encoding.endswith('11') and bit_str_encoding in dic:
                 valor_do_byte = dic[bit_str_encoding]
                 chr_valor_do_byte = chr(valor_do_byte)
