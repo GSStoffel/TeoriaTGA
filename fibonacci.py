@@ -1,120 +1,126 @@
 import sys
 import os
 
-def encode_fib(n):
-    result = ""
-    if n >= 1:
-        a = 1
-        b = 1
-        c = a + b
-        fibs = [b]
-        while n >= c:
-            fibs.append(c)
-            a = b
-            b = c
-            c = a + b
-        result = "1"
-        for fibnum in reversed(fibs):
-            if n >= fibnum:
-                n = n - fibnum
-                result = "1" + result
+def fibonacci_encode(numero):
+    saida = ""
+    if numero >= 1:
+        pri_aux = 1
+        seg_aux = 1
+        ter_aux = pri_aux + seg_aux
+        fibonacci = [seg_aux]
+
+        while numero >= ter_aux:
+            fibonacci.append(ter_aux)
+            pri_aux = seg_aux
+            seg_aux = ter_aux
+            ter_aux = pri_aux + seg_aux
+        saida = "1"
+        for numero_fibonacci in reversed(fibonacci):
+            if numero >= numero_fibonacci:
+                numero = numero - numero_fibonacci
+                saida = "1" + saida
             else:
-                result = "0" + result
-    return result
+                saida = "0" + saida
+    return saida
 
-def byteWriter(bitStr, outputFile):
-    global bitStream
-    bitStream += bitStr
-    while len(bitStream) > 8:
-        byteStr = bitStream[:8]
-        bitStream = bitStream[8:]
-        chr_int_bytestr = chr(int(byteStr, 2))
-        outputFile.write(bytes(chr_int_bytestr))
+def escrita(str_bit, nome_arquivo_saida):
+    global bit_stream
+    bit_stream += str_bit
 
-def bitReader(n):
-    global byteArr
-    global bitPosition
-    bitStr = ''
+    while len(bit_stream) > 8:
+        str_byte = bit_stream[:8]
+        bit_stream = bit_stream[8:]
+        chr_int_str_byte = chr(int(str_byte, 2))
+        nome_arquivo_saida.write(bytes(chr_int_str_byte))
+
+def leitor(n):
+    global array_de_bytes
+    global posicao_bit
+    str_bit = ''
     for i in range(n):
-        bitPosInByte = 7 - (bitPosition % 8)
-        bytePosition = int(bitPosition / 8)
-        byteVal = byteArr[bytePosition]
-        bitVal = int(byteVal / (2 ** bitPosInByte)) % 2
-        bitStr += str(bitVal)
-        bitPosition += 1
-    return bitStr
+        bitPosInByte = 7 - (posicao_bit % 8)
+        bytePosition = int(posicao_bit / 8)
+        byte_valor = array_de_bytes[bytePosition]
+        bitVal = int(byte_valor / (2 ** bitPosInByte)) % 2
+        str_bit += str(bitVal)
+        posicao_bit += 1
+    return str_bit
 
 if len(sys.argv) != 4:
-    sys.argv = ['.\\fibonacci.py', 'd', '.\\encoded.txt', 'decoded.txt']
-    print('Uso: Fibonacci.py [e (encoding)|d (decoding)] [path]inputFileName [path]outputFileName')
-mode = sys.argv[1]
-inputFile = sys.argv[2]
-outputFile = sys.argv[3]
+    print('Uso: python fibonacci.py [encode / decode] nomeArquivoEntrada nomeArquivoSaida')
+    sys.exit()
 
-fileSize = os.path.getsize(inputFile)
-fi = open(inputFile, 'rb')
-byteArr = bytearray(fi.read(fileSize))
-fi.close()
-fileSize = len(byteArr)
-print('File size in bytes:', fileSize)
-print()
+entrada = sys.argv[1]
+nome_arquivo_entrada = sys.argv[2]
+nome_arquivo_saida = sys.argv[3]
 
-if mode == 'e':
+tamanho_arquivo = os.path.getsize(nome_arquivo_entrada)
+arquivo_input = open(nome_arquivo_entrada, 'rb')
+array_de_bytes = bytearray(arquivo_input.read(tamanho_arquivo))
+arquivo_input.close()
+tamanho_arquivo = len(array_de_bytes)
+
+if entrada == 'encode':
     freqList = [0] * 256
-    for b in byteArr:
+    for b in array_de_bytes:
         freqList[b] += 1
 
-    tupleList = []
+    lista = []
     for b in range(256):
         if freqList[b] > 0:
-            tupleList.append((freqList[b], b, ''))
+            lista.append((freqList[b], b, ''))
 
-    tupleList = sorted(tupleList, key=lambda tup: tup[0], reverse = True)
+    lista = sorted(lista, key=lambda tupla: tupla[0], reverse = True)
 
-    for b in range(len(tupleList)):
-        tupleList[b] = (tupleList[b][0], tupleList[b][1], encode_fib(b + 1))
+    for b in range(len(lista)):
+        lista[b] = (lista[b][0], lista[b][1], fibonacci_encode(b + 1))
 
-    bitStream = ''
-    fo = open(outputFile, 'wb')
-    chr_len_tuple = chr(len(tupleList) - 1)
-    fo.write(bytes(chr_len_tuple))
-    for (freq, byteValue, encodingBitStr) in tupleList:
-      chr_byte_value = chr(byteValue)
-      fo.write(bytes(chr_byte_value))
+    bit_stream = ''
+    chr_len_tuple = chr(len(lista) - 1)
 
-    bitStr = bin(fileSize - 1)
-    bitStr = bitStr[2:]
-    bitStr = '0' * (32 - len(bitStr)) + bitStr
-    byteWriter(bitStr, fo)
+    arquivo_output = open(nome_arquivo_saida, 'wb')
+    arquivo_output.write(bytes(chr_len_tuple))
 
-    dic = dict([(tup[1], tup[2]) for tup in tupleList])
+    for (freq, valor_do_byte, bit_str_encoding) in lista:
+      chr_valor_byte = chr(valor_do_byte)
+      arquivo_output.write(bytes(chr_valor_byte))
 
-    for b in byteArr:
-        byteWriter(dic[b], fo)
+    str_bit = bin(tamanho_arquivo - 1)
+    str_bit = str_bit[2:]
+    str_bit = '0' * (32 - len(str_bit)) + str_bit
+    escrita(str_bit, arquivo_output)
 
-    byteWriter('0' * 8, fo)
-    fo.close()
+    dic = dict([(tupla[1], tupla[2]) for tupla in lista])
 
-elif mode == 'd':
-    bitPosition = 0
-    n = int(bitReader(8), 2) + 1
+    for b in array_de_bytes:
+        escrita(dic[b], arquivo_output)
+
+    escrita('0' * 8, arquivo_output)
+    arquivo_output.close()
+
+elif entrada == 'decode':
+    posicao_bit = 0
+    n = int(leitor(8), 2) + 1
     dic = dict()
     for i in range(n):
-        byteValue = int(bitReader(8), 2)
-        encodingBitStr = encode_fib(i + 1)
-        dic[encodingBitStr] = byteValue
+        valor_do_byte = int(leitor(8), 2)
+        bit_str_encoding = fibonacci_encode(i + 1)
+        dic[bit_str_encoding] = valor_do_byte
 
-    numBytes = long(bitReader(32), 2) + 1
+    bytes_num = long(leitor(32), 2) + 1
 
-    fo = open(outputFile, 'wb')
+    arquivo_output = open(nome_arquivo_saida, 'wb')
 
-    for b in range(numBytes):
-        encodingBitStr = ''
+    for b in range(bytes_num):
+        bit_str_encoding = ''
+
         while True:
-            encodingBitStr += bitReader(1)
-            if encodingBitStr.endswith('11') and encodingBitStr in dic:
-                byteValue = dic[encodingBitStr]
-                chr_bytevalue = chr(byteValue)
-                fo.write(bytes(chr_bytevalue))
+            bit_str_encoding += leitor(1)
+
+            if bit_str_encoding.endswith('11') and bit_str_encoding in dic:
+                valor_do_byte = dic[bit_str_encoding]
+                chr_valor_do_byte = chr(valor_do_byte)
+                fo.write(bytes(chr_valor_do_byte))
                 break
+
     fo.close()
