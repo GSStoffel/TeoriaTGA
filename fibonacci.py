@@ -120,7 +120,7 @@ elif entrada == 'decode':
             if bit_str_encoding.endswith('11') and bit_str_encoding in dic:
                 valor_do_byte = dic[bit_str_encoding]
                 chr_valor_do_byte = chr(valor_do_byte)
-                fo.write(bytes(chr_valor_do_byte))
+                arquivo_output.write(bytes(chr_valor_do_byte))
                 break
 
-    fo.close()
+    arquivo_output.close()
