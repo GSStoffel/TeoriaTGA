@@ -8,73 +8,72 @@ import sys
 """ --------------------------------------------------- LZ78 --------------------------------------------------- """
 
 def compress(uncompressed):
-	"""Compress a string to a list of output symbols."""
+	
+	# Inicia o dicionario
+	dic_size = 256
+	dicionario = dict((chr(i), chr(i)) for i in xrange(dic_size))
 
-	# Build the dictionary.
-	dict_size = 256
-	dictionary = dict((chr(i), chr(i)) for i in xrange(dict_size))
-	# in Python 3: dictionary = {chr(i): chr(i) for i in range(dict_size)}
-
-	w = ""
+	word = ""
 	result = []
-	for c in uncompressed:
-		wc = w + c
-		if wc in dictionary:
-			w = wc
+	
+	for caracter in uncompressed:
+		wc = word + caracter
+		
+		if wc in dicionario:
+			word = wc
 		else:
-			result.append(dictionary[w])
+			result.append(dicionario[word])
 			# Add wc to the dictionary.
-			dictionary[wc] = dict_size
-			dict_size += 1
-			w = c
+			dicionario[wc] = dic_size
+			dic_size += 1
+			word = caracter
 
-	# Output the code for w.
-	if w:
-		result.append(dictionary[w])
+	# Saida.
+	if word:
+		result.append(dicionario[word])
 	return result
 
 
 def decompress(compressed):
-	"""Decompress a list of output ks to a string."""
 	from cStringIO import StringIO
 
-	# Build the dictionary.
-	dict_size = 256
-	dictionary = dict((chr(i), chr(i)) for i in xrange(dict_size))
-	# in Python 3: dictionary = {chr(i): chr(i) for i in range(dict_size)}
+	# Inicia o dicionario
+	dic_size = 256
+	dicionario = dict((chr(i), chr(i)) for i in xrange(dic_size))
 
-	# use StringIO, otherwise this becomes O(N^2)
-	# due to string concatenation in a loop
+	# Retira da lista do python as palavras compactadas
 	result = StringIO()
-	w = compressed.pop(0)
-	result.write(w)
+	word = compressed.pop(0)
+	result.write(word)
+	
+	# Interações para saber se a palavra existe no dicionario
 	for k in compressed:
-		if k in dictionary:
-			entry = dictionary[k]
-		elif k == dict_size:
-			entry = w + w[0]
+	
+		if k in dicionario:
+			entrada = dicionario[k]
+		elif k == dic_size:
+			entrada = word + word[0]
 		else:
 			raise ValueError('Bad compressed k: %s' % k)
-		result.write(entry)
+		result.write(entrada)
 
-		# Add w+entry[0] to the dictionary.
-		dictionary[dict_size] = w + entry[0]
-		dict_size += 1
+		# Adicionar a palavra mais a proxima entrada
+		dicionario[dic_size] = word + entrada[0]
+		dic_size += 1
 
-		w = entry
+		word = entrada
 	return result.getvalue()
 
 """ --------------------------------------------------- FIBONACCI --------------------------------------------------- """
 
 def leitor(numero): # Lê do arquivo de entrada
+
 	tamanho_arquivo = os.path.getsize(nome_arquivo_entrada)
 	arquivo_input = open(nome_arquivo_entrada, 'rb')
 	array_de_bytes = bytearray(arquivo_input.read(tamanho_arquivo))
 	arquivo_input.close()
 	tamanho_arquivo = len(array_de_bytes)
 
-	
-	
 	global posicao_bit
 	str_bit = ''
 
@@ -122,26 +121,28 @@ def fibonacci_encode(numero):
 
 	return saida
 
-
+	""" ----------------------------------- PARAMETROS DE ENTRADA ----------------------------------- """
+	
 # Entrada com os 4 parâmetros:
 if len(sys.argv) != 4:
-	print('Para rodar o programa: python fibonacci.py [encode / decode] nomeArquivoEntrada nomeArquivoSaida')
+	print('Para rodar o programa: python Encoder.py [encode / decode] nomeArquivoEntrada nomeArquivoSaida')
 	sys.exit()
 
 entrada = sys.argv[1]
 nome_arquivo_entrada = sys.argv[2]
 nome_arquivo_saida = sys.argv[3]
 
+""" ----------------------------------- ENCODE ----------------------------------- """
+
 if entrada == 'encode': # Se for escolhido o encode no pipeline
-	print "entrou"
 	
-	""" ------------------------------------------------------------------------------ """
+	""" ----------------------------------- LZ78 - COMPRESS ----------------------------------- """
 	
 	entrada = open(nome_arquivo_entrada,'rb')
 	compactado = compress(entrada.read())
-	pickle.dump( compactado, open('temp.encode', 'wb' ) )
+	pickle.dump( compactado, open('temp.encode', 'wb' ) ) # Serializa a saida do LZ78 para após aplica fibonacci
 	
-	""" ------------------------------------------------------------------------------ """
+	""" ---------------------------------------------------------------------------------------- """
 	
 	tamanho_arquivo = os.path.getsize('temp.encode')
 	arquivo_input = open('temp.encode', 'rb')
@@ -188,6 +189,8 @@ if entrada == 'encode': # Se for escolhido o encode no pipeline
 	escrita('0' * 8, arquivo_output)
 	arquivo_output.close()
 
+	""" ----------------------------------- DECODE ----------------------------------- """
+	
 elif entrada == 'decode': # Se for escolhido o decode no pipeline
 	posicao_bit = 0
 	n = int(leitor(8), 2) + 1
@@ -212,7 +215,8 @@ elif entrada == 'decode': # Se for escolhido o decode no pipeline
 				arquivo_output.write(bytes(chr_valor_do_byte))
 				break
 	arquivo_output.close()
-	""" ------------------------------------------------------------------------------ """
+	
+	""" ----------------------------------- LZ78 - DECOMPRESS ----------------------------------- """
 
 	compressed = pickle.load(open('temp.decode', 'rb' ) )
 	decompressed = decompress(compressed)
@@ -220,5 +224,5 @@ elif entrada == 'decode': # Se for escolhido o decode no pipeline
 	saida_descompactada.write(decompressed)
 	
 
-	""" ------------------------------------------------------------------------------ """
+	""" ------------------------------------------------------------------------------------------ """
 
